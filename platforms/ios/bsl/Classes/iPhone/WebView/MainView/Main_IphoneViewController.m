@@ -93,7 +93,7 @@
     aCubeWebViewController.showCloseButton=YES;
     aCubeWebViewController.title=@"登录";
     aCubeWebViewController.wwwFolderName = @"www";
-    NSURL* fileUrl = [[NSURL alloc]init];
+    NSURL* fileUrl = nil;
 #ifdef MOBILE_BSL
     aCubeWebViewController.startPage =   [[[NSFileManager wwwRuntimeDirectory] URLByAppendingPathComponent:@"home/index.html"] absoluteString];
     fileUrl = [[NSFileManager wwwRuntimeDirectory] URLByAppendingPathComponent:@"home/index.html"];
@@ -118,7 +118,7 @@
         [aCubeWebViewController viewDidAppear:NO];
         [self addBadge];
         self.selfObj=nil;
-
+        
     }didErrorBlock:^(){
         [failedAlert dismissWithClickedButtonIndex:0 animated:NO];
         failedAlert = [[UIAlertView alloc]initWithTitle:@"提示" message:@"首页模块加载失败。" delegate:self cancelButtonTitle:@"确定" otherButtonTitles:nil, nil];
@@ -214,12 +214,12 @@
 
 
 -(void)moduleSysFinsh{
-    [self checkModules];
     if (!isFirst) {
         //检测是否需要自动安装
         [self autoShowModule];
         isFirst = true;
     }
+    [self checkModules];
 }
 
 -(void)checkModules{
@@ -231,10 +231,10 @@
     NSString* tip=[username stringByAppendingString:@"_notFirstLogin"];
     
     if([[NSUserDefaults standardUserDefaults] valueForKey:tip]!=nil){
+
         [self checkAutoUpdate];
         return;
     }
-    
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:tip];
 
     @autoreleasepool {
@@ -330,7 +330,7 @@
                     while([result next])
                     {
                         NSString * showTimeTmp = [result objectForColumnName:@"showTime"];
-                        long showTime = [showTimeTmp longLongValue];
+                        long long showTime = [showTimeTmp longLongValue];
                         
                         if([module.timeUnit isEqualToString:@"H"])
                         {
@@ -475,6 +475,7 @@
                 failedAlert=nil;
                 return;
             }
+            //[self.navigationController setNavigationBarHidden:NO animated:YES];
             [self.navigationController pushViewController:localController animated:YES];
             localController=nil;
             return;
@@ -646,7 +647,14 @@
 
 #pragma mark - 退出登陆
 -(void)logout{
+    //退出登录清空CubeApplication中的数组
+    CubeApplication *application = [CubeApplication currentApplication];
+    [[application modules] removeLastObject];
+    [[application availableModules] removeAllObjects];
+    [[application updatableModules] removeAllObjects];
+    [[application downloadingModules] removeAllObjects];
     [(AppDelegate *)[UIApplication sharedApplication].delegate showLoginView:NO];
+
 }
 
 
@@ -874,7 +882,14 @@
         [jsonCube  setObject:each.version forKey:@"version"];
         [jsonCube  setObject:each.releaseNote forKey:@"releaseNote"];
         [jsonCube  setObject:each.category forKey:@"category"];
-        [jsonCube  setObject:[each.iconUrl stringByAppendingFormat:@"?sessionKey=%@&appKey=%@",token,kAPPKey]  forKey:@"icon"];
+        if(!each.iconUrl)
+        {
+            [jsonCube  setObject:[@"" stringByAppendingFormat:@"?sessionKey=%@&appKey=%@",token,kAPPKey]  forKey:@"icon"];
+        }
+        else
+        {
+            [jsonCube  setObject:[each.iconUrl stringByAppendingFormat:@"?sessionKey=%@&appKey=%@",token,kAPPKey]  forKey:@"icon"];
+        }
         [jsonCube  setObject:each.identifier forKey:@"identifier"];
         [jsonCube  setObject:!each.local?@"":each.local forKey:@"local"];
         [jsonCube  setObject:each.name forKey:@"name"];

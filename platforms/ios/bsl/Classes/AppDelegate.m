@@ -412,6 +412,8 @@ void uncaughtExceptionHandler(NSException*exception){
 
 
 - (void)applicationDidReceiveMemoryWarning:(UIApplication*)application{
+    
+    NSLog(@"applicationDidReceiveMemoryWarning");
     [[NSURLCache sharedURLCache] removeAllCachedResponses];
 }
 
@@ -458,7 +460,7 @@ void uncaughtExceptionHandler(NSException*exception){
         [dictArray addObject:dictionary];
     }
     NSString *json = [dictArray JSONString];
-    NSLog(@"%@",json);
+   // NSLog(@"%@",json);
     dictArray=nil;
     
     FormDataRequest *request =[FormDataRequest requestWithURL:[NSURL URLWithString:[kServerURLString stringByAppendingFormat:@"%s","/csair-monitor/api/monitor/saveAll"]]];
@@ -505,6 +507,10 @@ void uncaughtExceptionHandler(NSException*exception){
         if ([privileges count]>0) {
             NSString* privilegeStr = @"";
             for (NSDictionary* privilege in privileges) {
+                if([[privilege objectForKey:@"name"] isEqual:[NSNull null]])
+                {
+                    continue;
+                }
                 NSString* name = [privilege objectForKey:@"name"];
                 if ([name length] > 0) {
                     privilegeStr = [privilegeStr stringByAppendingFormat:@"%@,",[privilege objectForKey:@"name"]];
