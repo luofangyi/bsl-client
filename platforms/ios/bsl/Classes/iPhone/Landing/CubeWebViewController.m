@@ -118,6 +118,8 @@
 #endif
     if([self.navigationController.viewControllers count]>2){
         [self.navigationController popToViewController:[self.navigationController.viewControllers objectAtIndex:1] animated:YES];
+        
+        
     }
     
 }
