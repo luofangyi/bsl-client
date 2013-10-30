@@ -210,7 +210,9 @@ NSString *const CubeModuleDeleteDidFailNotification = @"CubeModuleDeleteDidFailN
         if(processTimer!=nil){
             return ;
         }
-        processTimer=[NSTimer scheduledTimerWithTimeInterval:1.0f target:self selector:@selector(processTimeEvent) userInfo:nil repeats:NO];
+
+        processTimer=[NSTimer scheduledTimerWithTimeInterval:1.5f target:self selector:@selector(processTimeEvent) userInfo:nil repeats:NO];
+
         [self setProgress:downloadSize/(float)total];
     }];
 
