@@ -35,7 +35,7 @@
 #import "ConfigManager.h"
 #import "HTTPRequest.h"
 #import "UIDevice+IdentifierAddition.h"
-
+#import "MessageRecordTableViewController.h"
 #import <Cordova/CDVPlugin.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import "MessageRecord.h"
@@ -67,7 +67,10 @@ void uncaughtExceptionHandler(NSException*exception){
 
 }
 
-@interface AppDelegate ()<UIApplicationDelegate,XMPPIMActorDelegate,UIAlertViewDelegate>
+@interface AppDelegate ()<UIApplicationDelegate,XMPPIMActorDelegate,UIAlertViewDelegate>{
+    BOOL enterBg;
+    BOOL loginE;//登录的时候是否要显示消息界面
+}
 @property (assign,nonatomic) CFURLRef soundFileURLRef;
 @property (assign,nonatomic) SystemSoundID soundFileObject;
 
@@ -182,8 +185,13 @@ void uncaughtExceptionHandler(NSException*exception){
 
 -(void)applicationDidBecomeActive:(UIApplication *)application{
     NSLog(@"applicationDidBecomeActive");
-
+    enterBg = false;
 }
+
+-(void)applicationWillResignActive:(UIApplication *)application{
+    enterBg = true;
+}
+
 
 -(void)showLoginView:(BOOL)newLogin{
 
@@ -219,6 +227,9 @@ void uncaughtExceptionHandler(NSException*exception){
 
 }
 
+-(void)showMessage{
+    
+}
 
 -(void)showExit{
     UIAlertView* alertView = [[UIAlertView alloc]initWithTitle:@"提示" message:@"账号已在别处登录" delegate:self cancelButtonTitle:@"重新登录" otherButtonTitles:nil, nil];
@@ -235,6 +246,9 @@ void uncaughtExceptionHandler(NSException*exception){
 
 -(void)applicationDidEnterBackground:(UIApplication *)application
 {
+    
+    loginE = false;
+    
     [self.xmpp.managedObjectContext save:nil];
     if([SVProgressHUD isVisible]){
         [SVProgressHUD dismiss];
@@ -255,9 +269,8 @@ void uncaughtExceptionHandler(NSException*exception){
 	}
 }
 
+
 -(void)applicationWillEnterForeground:(UIApplication *)application{
-    
-    
     if ([self.window.rootViewController class] == [LoginViewController class]) {
         [self.uc check];
     }
@@ -301,17 +314,33 @@ void uncaughtExceptionHandler(NSException*exception){
 
 //加入apns推送功能
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo{
-
-    [[PushGetMessageInfo sharedInstance] updatePushMessage];
- 
-    [[UIApplication sharedApplication]  cancelAllLocalNotifications];
-    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+    if (enterBg) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"SHOW_MESSAGEVIEW" object:nil];
+        [[PushGetMessageInfo sharedInstance] updatePushMessage];
+//        [[UIApplication sharedApplication]  cancelAllLocalNotifications];
+//        [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
+        //判断是否登录
+        if([self.navControl.viewControllers count]<2){
+            loginE = true;
+            return;
+        }
+        
+        if (UI_USER_INTERFACE_IDIOM() ==  UIUserInterfaceIdiomPhone){
+            if([self.navControl.viewControllers count]>=2){
+                if([self.navControl.viewControllers count]>2)
+                    [self.navControl popToViewController:[self.navControl.viewControllers objectAtIndex:1] animated:NO];
+            }
+        }
+        
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"SHOW_DETAILVIEW" object:[NSArray arrayWithObjects:@"com.foss.message.record",@"main", nil]];
+    }
 }
 
 
 
 - (void)registerForRemoteNotification{
     [[UIApplication sharedApplication] registerForRemoteNotificationTypes:(UIRemoteNotificationTypeAlert|UIRemoteNotificationTypeBadge|UIRemoteNotificationTypeSound)];
+    
 }
 
 
@@ -333,7 +362,7 @@ void uncaughtExceptionHandler(NSException*exception){
 #ifdef _DEBUG
     [json setObject:@"apns_sandbox" forKey:@"channelId"];
 #else
-    [json setObject:@"apns" forKey:@"channelId"];
+    [json setObject:@"apns_sandbox" forKey:@"channelId"];
 #endif
     [json setObject:[[UIDevice currentDevice] uniqueDeviceIdentifier] forKey:@"deviceId"];
     [json setObject:kAPPKey forKey:@"appId"];
@@ -559,7 +588,7 @@ void uncaughtExceptionHandler(NSException*exception){
 
 -(void)didLogin{
  
-        [self setupXmppStream];
+    [self setupXmppStream];
     [self updateCheckInTags];
     [self updateCollectionFriends];
     
@@ -586,6 +615,16 @@ void uncaughtExceptionHandler(NSException*exception){
         view=nil;
         //
         main=nil;
+    }
+    
+    if (loginE) {
+        if (UI_USER_INTERFACE_IDIOM() ==  UIUserInterfaceIdiomPhone){
+            if([self.navControl.viewControllers count]>=2){
+                if([self.navControl.viewControllers count]>2)
+                    [self.navControl popToViewController:[self.navControl.viewControllers objectAtIndex:1] animated:NO];
+            }
+        }
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"SHOW_DETAILVIEW" object:[NSArray arrayWithObjects:@"com.foss.message.record",@"main", nil]];
     }
 }
 

@@ -270,8 +270,18 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
 
 
 -(void)installJS{
+    
+    //先获取 www 文件夹路径
+    NSURL* bundleDirectory = [NSFileManager wwwBundleDirectory];
+    //获取 document中 www的文件夹路径
+    NSURL* runDirectory = [NSFileManager wwwRuntimeDirectory];
+    
+    [FS copyFolderAtURL:bundleDirectory toURL:runDirectory error:nil];
+    return ;
     NSLog(@"安装js文件");    // [self installCoreBundle];
     NSURL * folderWWWUrl = [[NSFileManager wwwBundleDirectory] URLByAppendingPathComponent:@"cordova.js"];
+    
+    
     NSURL * documentFolderWWWUrl =  [[NSFileManager wwwRuntimeDirectory] URLByAppendingPathComponent:@"cordova.js"];
     NSError * error = nil;
     if ([FS fileExistsAtPath:[documentFolderWWWUrl path] ]) {
@@ -403,7 +413,7 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
             [updatableModules removeObject:m];
         }
     }
-
+    
     dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0ul);
     dispatch_async(queue, ^{
         
@@ -489,13 +499,13 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
 -(void)sync
 {
     
-//    if (self.installed) {
-//            NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
-//            NSString* stringUser = [userDefaults objectForKey:@"LoginUser"];
-//            NSURL *cubeURL = RUNTIME_CFG_USER_URL(stringUser);
-//            [self loadApplicatioFromURL:cubeURL];
-//        
-//    }
+    //    if (self.installed) {
+    //            NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
+    //            NSString* stringUser = [userDefaults objectForKey:@"LoginUser"];
+    //            NSURL *cubeURL = RUNTIME_CFG_USER_URL(stringUser);
+    //            [self loadApplicatioFromURL:cubeURL];
+    //
+    //    }
     
     NSUserDefaults* defaults = [NSUserDefaults standardUserDefaults];
     NSString *token =  [defaults objectForKey:@"token"];
@@ -522,11 +532,11 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
 }
 
 -(void)syncWithString:(NSString*)aURL token:(NSString *)token{
-   //判断网络是否可以使用
+    //判断网络是否可以使用
     
     if (([Reachability reachabilityForInternetConnection].currentReachabilityStatus != NotReachable) &&
         ([Reachability reachabilityForLocalWiFi].currentReachabilityStatus != NotReachable)) {
-            if(!syncing){
+        if(!syncing){
             [[AFAppDotNetAPIClient sharedClient]getPath:aURL parameters:nil success:^(AFHTTPRequestOperation *operation, id responseObject) {
                 syncing = false;
                 int statusCode =operation.response.statusCode;
@@ -534,7 +544,7 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
                     [[NSNotificationCenter defaultCenter] postNotificationName:CubeTokenTimeOutNotification object:self];
                     return;
                 }
-               
+                
                 if ([[responseObject objectForKey:@"result"]isEqualToString:@"error"]) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:CubeTokenTimeOutNotification object:self];
                     return;
@@ -609,9 +619,9 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
         else
         {
             //测试用删除掉
-//            if([remote_module.local isEqualToString:@"FilghtCaleMenu"])
-//                NSLog(@"%@",remote_module.local);
-//            remote_module.icon = [NSString stringWithFormat:@"local:%@ViewController.png",remote_module.local ];
+            //            if([remote_module.local isEqualToString:@"FilghtCaleMenu"])
+            //                NSLog(@"%@",remote_module.local);
+            //            remote_module.icon = [NSString stringWithFormat:@"local:%@ViewController.png",remote_module.local ];
         }
         //获取网络版本CubeModule
         CubeModule *local_module = [self moduleForIdentifier:remote_module.identifier];
@@ -637,7 +647,7 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
                 
             }else if(remote_module.build == local_module.build){
                 remote_module.version=local_module.version;
-
+                
                 [modules removeObject:local_module];
                 
                 [modules addObject:remote_module];
@@ -674,8 +684,8 @@ NSString *const CubeTokenTimeOutNotification = @"CubeTokenTimeOutNotification";
                                     }
                                 }
                             }
-//                            remote_module.isDownloading =YES;
-//                            [downloadingModules addObject:remote_module];
+                            //                            remote_module.isDownloading =YES;
+                            //                            [downloadingModules addObject:remote_module];
                         }
                         
                     }

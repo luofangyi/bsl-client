@@ -24,15 +24,18 @@
 #import "HTTPRequest.h"
 #import "AutoDownLoadRecord.h"
 #import "SVProgressHUD.h"
-
+#import "KKProgressToolbar.h"
+#import "CudeModuleDownDictionary.h"
 
 #define SHOW_DETAILVIEW  @"SHOW_DETAILVIEW"  //展示模块
 
 
-@interface MainViewViewController ()<DownloadCellDelegate,SettingMainViewControllerDelegate,SkinViewDelegate,UIGestureRecognizerDelegate>{
+@interface MainViewViewController ()<DownloadCellDelegate,SettingMainViewControllerDelegate,SkinViewDelegate,UIGestureRecognizerDelegate,KKProgressToolbarDelegate>{
+     KKProgressToolbar* statusToolbar;
     BOOL isFirst;
     
     CubeWebViewController *bCubeWebViewController;
+    int allDownCount;
     
     UIAlertView* failedAlert;
     UIAlertView* singleAlert;
@@ -62,6 +65,7 @@
             self.extendedLayoutIncludesOpaqueBars = NO;
             self.modalPresentationCapturesStatusBarAppearance = NO;
         }
+         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dissmissView) name:@"SHOW_MESSAGEVIEW" object:nil];
         
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(cubeSyncClick:) name:CubeSyncClickNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(showMainView) name:@"SHOW_MAINVIEW" object:nil];
@@ -149,6 +153,14 @@
     [super viewWillAppear:animated];
 }
 
+- (UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleLightContent;
+}
+- (BOOL)prefersStatusBarHidden{
+    return NO;
+}
+
+
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
 }
@@ -186,6 +198,16 @@
     bCubeWebViewController=nil;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     self.mainController=self;
+    
+}
+
+
+-(void)dissmissView{
+    
+    if(self.parentViewController== nil)return;
+    
+   [self dismissViewControllerAnimated:NO completion:^{
+        }];
     
 }
 
@@ -468,6 +490,7 @@
         }
         if(downloadArray && downloadArray.count>0)
         {
+            
             NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
             NSMutableArray *records = [[NSMutableArray alloc]initWithCapacity:0];
             for(CubeModule *module in downloadArray)
@@ -484,13 +507,18 @@
         {
             if(downloadArray && downloadArray.count>0)
             {
-                
+                allDownCount = downloadArray.count;
                 for(CubeModule *module in downloadArray)
                 {
                     [module install];
                 }
                 [[[CubeApplication currentApplication] downloadingModules] removeAllObjects];
+                CGRect statusToolbarFrame = CGRectMake(0, self.view.bounds.size.height, self.view.bounds.size.width, 44);
+                statusToolbar = [[KKProgressToolbar alloc] initWithFrame:statusToolbarFrame];
+                statusToolbar.actionDelegate = self;
+                [self.view addSubview:statusToolbar];
                 
+                [self startUILoading];
             }
             return;
             
@@ -549,7 +577,6 @@
 
 //通过通知回调函数 显示需要暂时的view
 -(void)showView:(NSNotification*)notification{
-    
     //notification.userInfo
     NSArray* arguments = notification.object;
     NSString* identifier = [arguments objectAtIndex:0];
@@ -805,8 +832,8 @@
     
     CGRect frame = vc.view.frame;
     frame.origin.y=top;
-    frame.size.width =CGRectGetWidth(self.view.frame)/2+2.0f;
-    frame.size.height= CGRectGetWidth(self.view.frame)-top;
+    frame.size.width =512;
+    frame.size.height= 768-top;
     vc.view.frame = frame;
     
     self.detailController = nil;
@@ -908,6 +935,7 @@
 
 
 -(void)dismissDetailViewController{
+    return;
     self.view.userInteractionEnabled = NO;
     
     [UIView animateWithDuration:0.3 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^(){
@@ -960,6 +988,17 @@
 }
 
 -(void)moduleInstallFail:(NSNotification*)tion{
+    
+    if (statusToolbar) {
+        int count = [self getDownMouleCount];
+        NSLog(@"count =%d , allcount =%d   last = %d",count,allDownCount,allDownCount - count);
+        if ( count <= 0 ) {
+            [self stopUILoading];
+        }else{
+            [self startUILoading];
+        }
+    }
+    
     CubeModule* cube = [tion object];
     NSString * javaScript = [NSString stringWithFormat:@"updateProgress('%@',%d);",cube.identifier,101];
     [aCubeWebViewController.webView stringByEvaluatingJavaScriptFromString:javaScript];
@@ -974,19 +1013,15 @@
 
 
 -(void)moduleDidInstalled:(NSNotification*)note{
-    /*
-     if (statusToolbar) {
-     
-     int count = [self getDownMouleCount];
-     NSLog(@"count =%d , allcount =%d   last = %d",count,allDownCount,allDownCount - count);
-     if ( count <= 0 ) {
-     [self stopUILoading];
-     }else{
-     [self startUILoading];
-     }
-     
-     }
-     */
+    if (statusToolbar) {
+        int count = [self getDownMouleCount];
+        NSLog(@"count =%d , allcount =%d   last = %d",count,allDownCount,allDownCount - count);
+        if ( count <= 0 ) {
+            [self stopUILoading];
+        }else{
+            [self startUILoading];
+        }
+    }
     
     CubeModule *newModule = [note object];
     if (newModule) {
@@ -1061,6 +1096,50 @@
 }
 
 - (void)clickItemWithIndex:(int)aIndex andIdentifier:(NSString*)aStr{
+}
+
+
+
+
+#pragma mark -- KKProgressToolbar delegate
+- (void)didCancelButtonPressed:(KKProgressToolbar *)toolbar {
+    [statusToolbar hide:YES completion:^(BOOL finished) {
+        
+    }];
+}
+
+-(void)startUILoading{
+    int count =[self getDownMouleCount];
+    statusToolbar.statusLabel.text = [NSString stringWithFormat:@"正在下载... %d/%d",(allDownCount - count) ,allDownCount];
+    
+    
+    statusToolbar.progressBar.progress = 1-(float)count/(float)allDownCount;
+    [statusToolbar show:YES completion:^(BOOL finished) {
+        CGRect frame = self.view.frame ;
+        if([[[UIDevice currentDevice] systemVersion] floatValue]>=7){
+            frame.origin.y=20.0f;
+            frame.size.height-=20.0f;
+        }
+        
+        frame.size.height -= 44;
+        aCubeWebViewController.view.frame = frame;
+    }];
+}
+
+-(void)stopUILoading{
+    [statusToolbar hide:YES completion:^(BOOL finished) {
+        CGRect frame = self.view.frame ;
+        if([[[UIDevice currentDevice] systemVersion] floatValue]>=7){
+            frame.origin.y=20.0f;
+            frame.size.height-=20.0f;
+        }
+        aCubeWebViewController.view.frame = frame;
+        [statusToolbar removeFromSuperview];
+        statusToolbar = nil;
+    }];
+}
+-(int)getDownMouleCount{
+    return [[CudeModuleDownDictionary shareModuleDownDictionary]  count];
 }
 
 

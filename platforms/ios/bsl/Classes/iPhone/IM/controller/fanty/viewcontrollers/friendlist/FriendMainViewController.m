@@ -57,6 +57,9 @@
         [fetchedResultsController performFetch:&error];
         
         
+        
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dissmissView) name:@"SHOW_MESSAGEVIEW" object:nil];
+
     }
     
     
@@ -65,7 +68,7 @@
 
 - (void)viewDidLoad{
     [super viewDidLoad];
-
+    
     CGRect rect=self.view.frame;
     if (UI_USER_INTERFACE_IDIOM() ==  UIUserInterfaceIdiomPad) {
         rect.size.width =CGRectGetHeight(self.view.frame)/2+2;
@@ -77,13 +80,13 @@
     if([[[UIDevice currentDevice] systemVersion] floatValue]>=7){
         rect.size.height-=20.0f;
     }
-
+    
     self.view.frame=rect;
     [self initTabBar];
     
     
     tableViewHeight=self.view.frame.size.height-CGRectGetMaxY(tabView.frame);
-
+    
     
     [self openOrCreateListView:1];
     
@@ -100,13 +103,13 @@
         self.navigationItem.titleView= vv;
     }
     
-
+    
 }
 
 -(void)viewWillAppear:(BOOL)animated{
     [super viewWillAppear:animated];
     [self.navigationController setNavigationBarHidden:NO animated:YES];
-
+    
     if(tabView.selectedIndex==0){
         
     }
@@ -119,7 +122,7 @@
 
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    }
+}
 
 
 - (void)didReceiveMemoryWarning{
@@ -130,42 +133,44 @@
 }
 
 - (void)dealloc{
+    
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     if([SVProgressHUD isVisible]){
         [SVProgressHUD dismiss];
     }
     
     [contactListView clear];
-
+    
     fetchedResultsController.delegate=nil;
     
     self.selectedSearchBar=nil;
     popover.delegate=nil;
     [popover dismissPopoverAnimated:NO];
-
+    
 }
 
 #pragma mark method
 
 
 -(void)createRrightNavItem{
-        UIButton *navRightButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 7, 43, 30)];
-        //navRightButton.style = UIBarButtonItemStyleBordered;
-        [navRightButton setBackgroundImage:[UIImage imageNamed:@"nav_add_btn.png"] forState:UIControlStateNormal];
-        [navRightButton setBackgroundImage:[UIImage imageNamed:@"nav_add_btn_active.png"] forState:UIControlStateSelected];
-        if(tabView.selectedIndex==2){
-            [navRightButton setTitle:(faviorContactView.editing?@"取消":@"编辑") forState:UIControlStateNormal];
-        }
-        else if(tabView.selectedIndex==0){
-            [navRightButton setTitle:(recentTalkView.editing?@"取消":@"编辑") forState:UIControlStateNormal];
-
-        }
-        else{
-            [navRightButton setTitle:@"群聊" forState:UIControlStateNormal];
-            
-        }
-        [[navRightButton titleLabel] setFont:[UIFont systemFontOfSize:13]];
-        [navRightButton addTarget:self action:@selector(addGroupChatClick) forControlEvents:UIControlEventTouchUpInside];
-        self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:navRightButton];
+    UIButton *navRightButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 7, 43, 30)];
+    //navRightButton.style = UIBarButtonItemStyleBordered;
+    [navRightButton setBackgroundImage:[UIImage imageNamed:@"nav_add_btn.png"] forState:UIControlStateNormal];
+    [navRightButton setBackgroundImage:[UIImage imageNamed:@"nav_add_btn_active.png"] forState:UIControlStateSelected];
+    if(tabView.selectedIndex==2){
+        [navRightButton setTitle:(faviorContactView.editing?@"取消":@"编辑") forState:UIControlStateNormal];
+    }
+    else if(tabView.selectedIndex==0){
+        [navRightButton setTitle:(recentTalkView.editing?@"取消":@"编辑") forState:UIControlStateNormal];
+        
+    }
+    else{
+        [navRightButton setTitle:@"群聊" forState:UIControlStateNormal];
+        
+    }
+    [[navRightButton titleLabel] setFont:[UIFont systemFontOfSize:13]];
+    [navRightButton addTarget:self action:@selector(addGroupChatClick) forControlEvents:UIControlEventTouchUpInside];
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:navRightButton];
 }
 
 -(void)initTabBar{
@@ -184,7 +189,7 @@
     numberView.frame=rect;
     
     [self loadNumber];
-
+    
 }
 
 -(void)openOrCreateListView:(int)tab{
@@ -192,7 +197,7 @@
     contactListView.hidden=YES;
     faviorContactView.hidden=YES;
     [self filterClick];
-
+    
     if(tab==0){
         if(recentTalkView==nil){
             recentTalkView=[[RecentTalkView alloc] initWithFrame:CGRectMake(0.0f, CGRectGetMaxY(tabView.frame), self.view.frame.size.width, tableViewHeight) style:UITableViewStylePlain];
@@ -228,7 +233,7 @@
         [faviorContactView setEditing:NO animated:NO];
     }
     [self createRrightNavItem];
-
+    
 }
 
 -(void)filterClick{
@@ -260,7 +265,7 @@
         [recentTalkView setEditing:!recentTalkView.editing animated:YES];
         [self createRrightNavItem];
         return;
-
+        
     }
     
     AppDelegate* appDelegate=(AppDelegate*)[[UIApplication sharedApplication] delegate];
@@ -268,7 +273,7 @@
         [SVProgressHUD showErrorWithStatus:@"即时通讯没有连接！"];
         return;
     }
-
+    
     ContactSelectedForGroupViewController* controller=[[ContactSelectedForGroupViewController alloc] init];
     controller.delegate=self;
     
@@ -278,10 +283,10 @@
         [popover dismissPopoverAnimated:NO];
         popover=nil;
         popover = [[UIPopoverController alloc] initWithContentViewController:controller];
-        popover.delegate=self;        
+        popover.delegate=self;
         popover.popoverContentSize=self.view.frame.size;
         [popover presentPopoverFromRect:self.view.frame inView:self.view permittedArrowDirections:UIPopoverArrowDirectionAny animated:YES];
-
+        
     }
     else{
         
@@ -289,6 +294,24 @@
             
         }];
         
+    }
+    
+    
+    
+}
+
+-(void)dissmissView{
+    
+    if(popover==nil && self.parentViewController== nil)return;
+    
+    if (UI_USER_INTERFACE_IDIOM() ==  UIUserInterfaceIdiomPad) {
+        popover.delegate=nil;
+        [popover dismissPopoverAnimated:NO];
+        popover=nil;
+    }else{
+        
+        [self dismissViewControllerAnimated:NO completion:^{
+        }];
     }
     
 }
@@ -301,7 +324,7 @@
         number+=[obj.noReadMsgNumber intValue];
     }
     
-
+    
     [numberView number:number];
 }
 
@@ -316,7 +339,7 @@
         
         __controller.isGroupChat=YES;
         [self.navigationController pushViewController:__controller animated:YES];
-
+        
     }
     if(popover!=nil){
         popover.delegate=nil;
@@ -379,19 +402,19 @@
 
 -(void)contactListSearchBarSearchButtonClicked:(ContactListView*)contactList searchBar:(UISearchBar*)searchBar{
     [self filterClick];
-
+    
 }
 
 -(void)contactListSearchBarCancelButtonClicked:(ContactListView*)contactList searchBar:(UISearchBar*)searchBar{
     [self filterClick];
-
+    
 }
 
 -(void)contactListSearchBarTextChanged:(ContactListView*)contactList searchBar:(UISearchBar*)searchBar{
     NSString* searchText=[searchBar.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
+    
     fliterBg.hidden=([searchText length]>0);
-
+    
 }
 
 
@@ -412,7 +435,7 @@
     controller.isQuit=[rectangleChat.isQuit boolValue];
     controller.isGroupChat=[rectangleChat.isGroup boolValue];
     [self.navigationController pushViewController:controller animated:YES];
-
+    
 }
 
 #pragma mark favior view delegate
@@ -424,7 +447,7 @@
     controller.chatName=[userInfo name];
     
     [self.navigationController pushViewController:controller animated:YES];
-
+    
 }
 
 -(void)faviorContactViewDidDelete:(FaviorContactView*)recentTalkView userInfo:(UserInfo*)userInfo{
@@ -432,7 +455,7 @@
     [SVProgressHUD showWithStatus:@"操作执行中..." maskType:SVProgressHUDMaskTypeBlack];
     
     [IMServerAPI deleteCollectIMFriend:userInfo.userJid block:^(BOOL status){
-            
+        
         if(!status){
             [SVProgressHUD showErrorWithStatus:@"操作失败，请稍后再试！"];
         }
@@ -449,7 +472,7 @@
 #pragma mark  fetchedresultscontroller  delegate
 
 - (void)controller:(NSFetchedResultsController *)controller didChangeObject:(id)anObject atIndexPath:(NSIndexPath *)indexPath forChangeType:(NSFetchedResultsChangeType)type newIndexPath:(NSIndexPath *)newIndexPath{
-
+    
     [self loadNumber];
 }
 @end

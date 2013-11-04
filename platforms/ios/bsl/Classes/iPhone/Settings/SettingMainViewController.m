@@ -63,9 +63,9 @@
         
         NSMutableArray* firstArray = [[NSMutableArray alloc]init];
         
-        NSArray* array1 = [[NSArray alloc]initWithObjects:@"更新版本",@"setting_update.png", nil];
-        NSArray* array2 = [[NSArray alloc]initWithObjects:@"关于我们",@"setting_about.png", nil];
-        NSArray* array3 = [[NSArray alloc]initWithObjects:@"即时通讯",@"setting_about.png", nil];
+        NSArray* array1 = [[NSArray alloc]initWithObjects:@"  更新版本",@"setting_update.png", nil];
+        NSArray* array2 = [[NSArray alloc]initWithObjects:@"  关于我们",@"setting_about.png", nil];
+        NSArray* array3 = [[NSArray alloc]initWithObjects:@"  即时通讯",@"setting_about.png", nil];
         
         [firstArray addObject:array1];
         [firstArray addObject:array2];

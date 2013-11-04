@@ -90,12 +90,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "bsl/Classes/iPad/MainView/controller/MainViewViewController.m"
-            timestampString = "403701588.165428"
+            timestampString = "404989051.717311"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "414"
-            endingLineNumber = "414"
-            landmarkName = "-alertView:clickedButtonAtIndex:"
+            startingLineNumber = "436"
+            endingLineNumber = "436"
+            landmarkName = "-showSetting"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
@@ -192,6 +192,22 @@
             startingLineNumber = "275"
             endingLineNumber = "275"
             landmarkName = "-clickConfigButton:"
+            landmarkType = "5">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "bsl/Classes/AppDelegate.m"
+            timestampString = "404988856.851639"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "325"
+            endingLineNumber = "325"
+            landmarkName = "-application:didReceiveRemoteNotification:"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>
